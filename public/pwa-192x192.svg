@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <!-- 背景圆形 -->
+  <circle cx="96" cy="96" r="90" fill="#F97316"/>
+  <!-- 书本底部 -->
+  <rect x="40" y="55" width="112" height="85" rx="8" fill="#FFF7ED"/>
+  <!-- 书本中缝 -->
+  <line x1="96" y1="55" x2="96" y2="140" stroke="#F97316" stroke-width="3"/>
+  <!-- 书本翻页效果左 -->
+  <path d="M40 55 Q50 50 96 55 L96 140 Q50 135 40 140 Z" fill="#FED7AA" opacity="0.5"/>
+  <!-- 书本翻页效果右 -->
+  <path d="M152 55 Q142 50 96 55 L96 140 Q142 135 152 140 Z" fill="#FED7AA" opacity="0.5"/>
+  <!-- 字母 A -->
+  <text x="68" y="112" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="#F97316" text-anchor="middle">A</text>
+  <!-- 字母 B -->
+  <text x="124" y="112" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="#06B6D4" text-anchor="middle">B</text>
+  <!-- 顶部装饰 - 星星 -->
+  <polygon points="96,20 99,29 109,29 101,35 104,45 96,39 88,45 91,35 83,29 93,29" fill="#FBBF24"/>
+</svg>
