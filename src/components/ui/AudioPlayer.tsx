@@ -3,6 +3,106 @@ import { useState, useRef, useEffect } from 'react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
+// 判断是否运行在 Capacitor 原生 APK 中
+function isNativeApp(): boolean {
+  try {
+    // @ts-ignore
+    return typeof window !== 'undefined' && window.Capacitor &&
+      // @ts-ignore
+      ['android', 'ios'].includes(window.Capacitor?.getPlatform?.() ?? '')
+  } catch { return false }
+}
+
+// Capacitor 原生 TTS 插件（只在 APK 里加载时才用）
+async function speakNative(text: string): Promise<boolean> {
+  try {
+    // @ts-ignore - 动态 import，PC 浏览器不会走到这里
+    const { TextToSpeech } = await import('@capacitor-community/text-to-speech')
+    await TextToSpeech.speak({
+      text: text,
+      lang: 'en-US',
+      rate: 1.05,
+      pitch: 1,
+      volume: 1,
+    })
+    return true
+  } catch (e) {
+    console.warn('[AudioPlayer] native TTS failed:', e)
+    return false
+  }
+}
+
+// Web Speech API（浏览器 & WebView 里可用，桌面 Chrome 正常发音）
+function speakWeb(text: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' ||
+        !('speechSynthesis' in window) ||
+        typeof SpeechSynthesisUtterance === 'undefined') {
+      resolve(false)
+      return
+    }
+    try {
+      const s = window.speechSynthesis
+      const u = new SpeechSynthesisUtterance(text)
+      u.rate = 1.05
+      u.pitch = 1
+      u.volume = 1
+      u.lang = 'en-US'
+
+      let resolved = false
+      const done = (ok: boolean) => { if (!resolved) { resolved = true; resolve(ok) } }
+
+      u.onend = () => done(true)
+      u.onerror = () => done(false)
+
+      s.cancel()
+      s.speak(u)
+
+      // 超时保护
+      setTimeout(() => done(false), 6000)
+    } catch { resolve(false) }
+  })
+}
+
+// 在线 TTS（Google 翻译 TTS，兜底用）
+function speakOnline(text: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') { resolve(false); return }
+    try {
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=en&client=gtx`
+      const audio = new Audio(url)
+      audio.volume = 1
+
+      let resolved = false
+      const finish = (ok: boolean) => { if (!resolved) { resolved = true; resolve(ok) } }
+      audio.onended = () => finish(true)
+      audio.onerror = () => finish(false)
+      setTimeout(() => finish(false), 8000)
+      audio.play()?.catch(() => finish(false))
+    } catch { resolve(false) }
+  })
+}
+
+// 统一的发音入口：APK → 原生 TTS；否则 Web Speech API；都失败 → 在线 TTS
+async function speakText(text: string): Promise<void> {
+  const trimmed = text.trim().substring(0, 200)
+  if (!trimmed) return
+
+  // 1) APK 里优先用原生 TTS
+  if (isNativeApp()) {
+    const ok = await speakNative(trimmed)
+    if (ok) return
+    // 原生失败，继续尝试 Web Speech 或 在线 TTS
+  }
+
+  // 2) Web Speech API（桌面浏览器、移动浏览器都支持）
+  const webOk = await speakWeb(trimmed)
+  if (webOk) return
+
+  // 3) 兜底：在线 TTS
+  await speakOnline(trimmed)
+}
+
 interface AudioPlayerProps {
   text: string
   className?: string
@@ -20,65 +120,6 @@ const iconSizes = {
   sm: 20,
   md: 28,
   lg: 40
-}
-
-function isSpeechSupported(): boolean {
-  return typeof window !== 'undefined' &&
-         'speechSynthesis' in window &&
-         typeof SpeechSynthesisUtterance !== 'undefined'
-}
-
-function getEnglishVoice(): SpeechSynthesisVoice | null {
-  if (!isSpeechSupported()) return null
-  try {
-    const voices = window.speechSynthesis.getVoices()
-    if (!voices || voices.length === 0) return null
-    return voices.find(v => /en-US/i.test(v.lang)) ||
-           voices.find(v => /en-GB/i.test(v.lang)) ||
-           voices.find(v => /en/i.test(v.lang)) || null
-  } catch { return null }
-}
-
-// 播放单词：Web Speech 直接播，Google TTS 作为后台备用（国内用户听 Web Speech）
-function speakText(text: string): Promise<void> {
-  return new Promise((resolve) => {
-    const trimmed = text.trim().substring(0, 200)
-
-    // 主引擎：Web Speech API（低延迟，桌面/移动端均有英文语音）
-    if (isSpeechSupported()) {
-      try {
-        const s = window.speechSynthesis
-        const u = new SpeechSynthesisUtterance(trimmed)
-        u.rate = 1.05
-        u.pitch = 1
-        u.volume = 1
-        u.lang = 'en-US'
-        const voice = getEnglishVoice()
-        if (voice) u.voice = voice
-
-        u.onend = () => resolve()
-        u.onerror = () => resolve()
-
-        s.speak(u)
-
-        // 超时保护
-        setTimeout(() => resolve(), 8000)
-        return
-      } catch { /* fall through */ }
-    }
-
-    // 兜底：Google TTS
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(trimmed)}&tl=en&client=gtx`
-    try {
-      const audio = new Audio(url)
-      audio.volume = 1
-      audio.playbackRate = 1.15
-      audio.onended = () => resolve()
-      audio.onerror = () => resolve()
-      audio.play()?.catch(() => resolve())
-      setTimeout(() => resolve(), 8000)
-    } catch { resolve() }
-  })
 }
 
 export function AudioPlayer({
@@ -100,7 +141,7 @@ export function AudioPlayer({
     if (playingTimer.current) clearTimeout(playingTimer.current)
 
     setIsPlaying(true)
-    speakText(text).then(() => setIsPlaying(false))
+    speakText(text).finally(() => setIsPlaying(false))
 
     playingTimer.current = window.setTimeout(() => setIsPlaying(false), 5000)
   }
@@ -154,14 +195,9 @@ export function AudioPlayerWithControl({ text, className }: AudioPlayerWithContr
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (!text) return
-    if (playingTimer.current) clearTimeout(playingTimer.current)
 
     setIsPlaying(true)
-    speakText(text).then(() => setIsPlaying(false))
-
-    playingTimer.current = (typeof window !== 'undefined' ? window : globalThis as any).setTimeout(() => {
-      setIsPlaying(false)
-    }, 5000)
+    speakText(text).finally(() => setIsPlaying(false))
   }
 
   return (
