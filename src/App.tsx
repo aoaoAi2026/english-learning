@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Layout } from '@/components/layout/Layout'
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary'
+import { SoundInit } from '@/components/ui/SoundInit'
 import { HomePage } from '@/pages/HomePage'
 import { GradeHomePage } from '@/pages/GradeHomePage'
 import { WordsPage } from '@/pages/WordsPage'
@@ -19,6 +20,7 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <Layout>
+          <SoundInit />
           <Routes>
           {/* 首页 */}
           <Route path="/" element={<HomePage />} />
