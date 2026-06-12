@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { BookOpen, Mic, Gamepad2, FileText, ArrowLeft, Library, PenTool, MessageCircle } from 'lucide-react'
+import { BookOpen, Mic, Gamepad2, FileText, ArrowLeft, Library, PenTool, MessageCircle, Sparkles, Gamepad } from 'lucide-react'
 import { Grade, GradeNames } from '@/types'
 import { useUserStore } from '@/stores/userStore'
 import { getLevelsByGrade } from '@/data/levels'
@@ -94,6 +94,49 @@ export function GradeHomePage() {
     }
   ]
 
+  const gameCards = [
+    {
+      title: '记忆翻牌',
+      emoji: '🧠',
+      path: 'memory',
+      desc: '单词配对',
+      bg: 'from-pink-400 to-rose-400',
+      glow: 'shadow-pink-200',
+    },
+    {
+      title: '拼写蜜蜂',
+      emoji: '🐝',
+      path: 'spelling',
+      desc: '听音拼词',
+      bg: 'from-amber-400 to-orange-400',
+      glow: 'shadow-amber-200',
+    },
+    {
+      title: '单词搜索',
+      emoji: '🔍',
+      path: 'wordsearch',
+      desc: '找隐藏单词',
+      bg: 'from-emerald-400 to-teal-400',
+      glow: 'shadow-emerald-200',
+    },
+    {
+      title: '字母消消乐',
+      emoji: '🔤',
+      path: 'scramble',
+      desc: '重组字母',
+      bg: 'from-indigo-400 to-purple-400',
+      glow: 'shadow-indigo-200',
+    },
+    {
+      title: '幸运转盘',
+      emoji: '🎡',
+      path: 'spinwheel',
+      desc: '赢取星星',
+      bg: 'from-red-400 to-orange-400',
+      glow: 'shadow-red-200',
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-cyan-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -151,6 +194,43 @@ export function GradeHomePage() {
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* Fun Games Section */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <Link
+              to={`/grade/${grade}/games`}
+              className="flex items-center gap-2 text-gray-700 hover:text-purple-600 transition-colors group"
+            >
+              <div className="p-2 bg-purple-100 rounded-xl group-hover:bg-purple-200 transition-colors">
+                <Gamepad className="text-purple-500" size={22} />
+              </div>
+              <h2 className="text-xl font-bold">趣味小游戏</h2>
+              <Sparkles className="text-yellow-500" size={18} />
+            </Link>
+            <Link
+              to={`/grade/${grade}/games`}
+              className="text-sm text-purple-500 hover:text-purple-700 font-medium"
+            >
+              查看全部 →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {gameCards.map((game) => (
+              <Link
+                key={game.path}
+                to={`/grade/${grade}/games/${game.path}`}
+                className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer border border-gray-100 text-center group"
+              >
+                <div className={`w-12 h-12 mx-auto mb-2 rounded-xl bg-gradient-to-br ${game.bg} flex items-center justify-center shadow-md ${game.glow} group-hover:shadow-lg transition-shadow`}>
+                  <span className="text-2xl">{game.emoji}</span>
+                </div>
+                <div className="font-bold text-gray-800 text-sm mb-0.5">{game.title}</div>
+                <div className="text-xs text-gray-400">{game.desc}</div>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* Words Preview */}

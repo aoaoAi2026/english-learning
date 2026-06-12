@@ -22,184 +22,87 @@ const iconSizes = {
   lg: 40
 }
 
-// 检查是否支持 Web Speech API
 function isSpeechSupported(): boolean {
-  return typeof window !== 'undefined' && 
-         'speechSynthesis' in window && 
+  return typeof window !== 'undefined' &&
+         'speechSynthesis' in window &&
          typeof SpeechSynthesisUtterance !== 'undefined'
 }
 
-// 获取英语语音
 function getEnglishVoice(): SpeechSynthesisVoice | null {
   if (!isSpeechSupported()) return null
-  
   try {
     const voices = window.speechSynthesis.getVoices()
     if (!voices || voices.length === 0) return null
-    
-    // 优先选择美式英语
-    const preferred = voices.find(v => /en-US/i.test(v.lang)) || 
-                     voices.find(v => /en-GB/i.test(v.lang)) ||
-                     voices.find(v => /en/i.test(v.lang)) ||
-                     voices[0]
-    
-    return preferred || null
-  } catch {
-    return null
-  }
+    return voices.find(v => /en-US/i.test(v.lang)) ||
+           voices.find(v => /en-GB/i.test(v.lang)) ||
+           voices.find(v => /en/i.test(v.lang)) || null
+  } catch { return null }
 }
 
-// 播放单词（直接调用 Web Speech API）
+// 播放单词：Web Speech 直接播，Google TTS 作为后台备用（国内用户听 Web Speech）
 function speakText(text: string): Promise<void> {
   return new Promise((resolve) => {
-    if (!isSpeechSupported()) {
-      console.warn('当前浏览器不支持语音合成')
-      resolve()
-      return
+    const trimmed = text.trim().substring(0, 200)
+
+    // 主引擎：Web Speech API（低延迟，桌面/移动端均有英文语音）
+    if (isSpeechSupported()) {
+      try {
+        const s = window.speechSynthesis
+        const u = new SpeechSynthesisUtterance(trimmed)
+        u.rate = 1.05
+        u.pitch = 1
+        u.volume = 1
+        u.lang = 'en-US'
+        const voice = getEnglishVoice()
+        if (voice) u.voice = voice
+
+        u.onend = () => resolve()
+        u.onerror = () => resolve()
+
+        s.speak(u)
+
+        // 超时保护
+        setTimeout(() => resolve(), 8000)
+        return
+      } catch { /* fall through */ }
     }
 
+    // 兜底：Google TTS
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(trimmed)}&tl=en&client=gtx`
     try {
-      // 取消之前的播放
-      window.speechSynthesis.cancel()
-
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.rate = 0.85
-      utterance.pitch = 1
-      utterance.volume = 1
-      utterance.lang = 'en-US'
-      
-      // 设置语音
-      const voice = getEnglishVoice()
-      if (voice) {
-        utterance.voice = voice
-      }
-
-      utterance.onend = () => resolve()
-      utterance.onerror = (e) => {
-        console.warn('语音播放错误:', e)
-        resolve()
-      }
-
-      window.speechSynthesis.speak(utterance)
-      
-      // 超时保护（最长3秒）
-      setTimeout(() => {
-        try {
-          const speaking = window.speechSynthesis.speaking
-          if (speaking) {
-            window.speechSynthesis.cancel()
-          }
-          resolve()
-        } catch {
-          resolve()
-        }
-      }, 3000)
-      
-    } catch (e) {
-      console.warn('语音播放异常:', e)
-      resolve()
-    }
+      const audio = new Audio(url)
+      audio.volume = 1
+      audio.playbackRate = 1.15
+      audio.onended = () => resolve()
+      audio.onerror = () => resolve()
+      audio.play()?.catch(() => resolve())
+      setTimeout(() => resolve(), 8000)
+    } catch { resolve() }
   })
 }
 
-export function AudioPlayer({ 
-  text, 
-  className, 
+export function AudioPlayer({
+  text,
+  className,
   size = 'md',
   variant = 'primary'
 }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isSupported, setIsSupported] = useState(false)
   const playingTimer = useRef<number | null>(null)
 
-  // 组件挂载时检测浏览器支持
   useEffect(() => {
-    setIsSupported(isSpeechSupported())
-    
-    // 有些浏览器需要等语音列表加载完成
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.onvoiceschanged = () => {
-          setIsSupported(true)
-        }
-      } catch {
-        // 忽略
-      }
-    }
-    
-    return () => {
-      if (playingTimer.current) {
-        clearTimeout(playingTimer.current)
-      }
-    }
+    return () => { if (playingTimer.current) clearTimeout(playingTimer.current) }
   }, [])
 
-  const handlePlay = () => {
+  const handlePlay = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (!text) return
-    
-    // 停止之前的播放
-    if (playingTimer.current) {
-      clearTimeout(playingTimer.current)
-    }
-    
-    // 设置播放状态（即使不支持也给用户反馈）
+    if (playingTimer.current) clearTimeout(playingTimer.current)
+
     setIsPlaying(true)
-    
-    // 播放语音 - 关键：不要用 async/await 等待
-    // 移动端浏览器要求播放必须在用户点击的同步事件中
-    try {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        // 直接同步播放，不等待Promise
-        window.speechSynthesis.cancel()
-        
-        const utterance = new SpeechSynthesisUtterance(text)
-        utterance.rate = 0.85
-        utterance.pitch = 1
-        utterance.volume = 1
-        utterance.lang = 'en-US'
-        
-        // 尝试获取英语语音
-        try {
-          const voices = window.speechSynthesis.getVoices()
-          const enVoice = voices.find(v => /en/i.test(v.lang))
-          if (enVoice) {
-            utterance.voice = enVoice
-          }
-        } catch {
-          // 忽略语音选择错误
-        }
-        
-        utterance.onend = () => setIsPlaying(false)
-        utterance.onerror = () => setIsPlaying(false)
-        
-        window.speechSynthesis.speak(utterance)
-        
-        // 超时保护
-        const duration = Math.max(1000, text.length * 150)
-        playingTimer.current = (typeof window !== 'undefined' ? window : globalThis as any).setTimeout(() => {
-          setIsPlaying(false)
-          if (typeof window !== 'undefined' && window.speechSynthesis) {
-            try {
-              window.speechSynthesis.cancel()
-            } catch {
-              // 忽略
-            }
-          }
-        }, duration)
-      } else {
-        // 不支持时也给出提示
-        const duration = Math.max(1000, text.length * 150)
-        playingTimer.current = (typeof window !== 'undefined' ? window : globalThis as any).setTimeout(() => {
-          setIsPlaying(false)
-        }, duration)
-      }
-    } catch (e) {
-      console.warn('语音播放异常:', e)
-      const duration = Math.max(1000, text.length * 150)
-      playingTimer.current = (typeof window !== 'undefined' ? window : globalThis as any).setTimeout(() => {
-        setIsPlaying(false)
-      }, duration)
-    }
+    speakText(text).then(() => setIsPlaying(false))
+
+    playingTimer.current = window.setTimeout(() => setIsPlaying(false), 5000)
   }
 
   return (
@@ -207,18 +110,20 @@ export function AudioPlayer({
       onClick={handlePlay}
       className={twMerge(
         clsx(
-          'rounded-full flex items-center justify-center',
-          'transition-all duration-200 active:scale-95',
           sizeStyles[size],
+          'rounded-full flex items-center justify-center',
+          'transition-all duration-150 active:scale-90',
+          'touch-manipulation select-none border-none outline-none cursor-pointer',
           variant === 'primary'
-            ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg'
-            : 'bg-cyan-400 hover:bg-cyan-500 text-white shadow-md hover:shadow-lg',
-          isPlaying && 'animate-pulse',
-          !isSupported && 'opacity-70',
-          className
+            ? 'bg-orange-500 hover:bg-orange-600 active:bg-orange-600 text-white shadow-md hover:shadow-lg'
+            : 'bg-cyan-400 hover:bg-cyan-500 active:bg-cyan-500 text-white shadow-md hover:shadow-lg',
+          isPlaying && 'animate-pulse scale-105',
+          className,
         )
       )}
-      title={isSupported ? '点击播放发音' : '当前浏览器可能不支持语音播放'}
+      title="点击播放发音"
+      aria-label={`播放 ${text} 的发音`}
+      type="button"
     >
       {isPlaying ? (
         <div className="flex gap-0.5">
@@ -233,7 +138,6 @@ export function AudioPlayer({
   )
 }
 
-// 带音量控制的播放器
 interface AudioPlayerWithControlProps {
   text: string
   className?: string
@@ -244,27 +148,20 @@ export function AudioPlayerWithControl({ text, className }: AudioPlayerWithContr
   const playingTimer = useRef<number | null>(null)
 
   useEffect(() => {
-    return () => {
-      if (playingTimer.current) {
-        clearTimeout(playingTimer.current)
-      }
-    }
+    return () => { if (playingTimer.current) clearTimeout(playingTimer.current) }
   }, [])
 
-  const handlePlay = () => {
+  const handlePlay = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (!text) return
-    
-    if (playingTimer.current) {
-      clearTimeout(playingTimer.current)
-    }
-    
+    if (playingTimer.current) clearTimeout(playingTimer.current)
+
     setIsPlaying(true)
-    speakText(text)
-    
-    const duration = Math.max(1000, text.length * 150)
+    speakText(text).then(() => setIsPlaying(false))
+
     playingTimer.current = (typeof window !== 'undefined' ? window : globalThis as any).setTimeout(() => {
       setIsPlaying(false)
-    }, duration)
+    }, 5000)
   }
 
   return (

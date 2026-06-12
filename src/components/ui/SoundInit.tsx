@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Volume2 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { initAudio } from '@/utils/sounds'
 
 interface SoundInitProps {
   onInit?: () => void
@@ -13,7 +14,6 @@ export function SoundInit({ onInit }: SoundInitProps) {
   const [showHint, setShowHint] = useState(false)
 
   useEffect(() => {
-    // 检查是否已经初始化过
     const hasInit = localStorage.getItem('soundInitialized')
     if (!hasInit) {
       setShowHint(true)
@@ -21,31 +21,31 @@ export function SoundInit({ onInit }: SoundInitProps) {
   }, [])
 
   const handleInit = () => {
-    // 初始化语音系统
+    // 1) 解锁 Web Audio（共享 AudioContext）
+    initAudio()
+
+    // 2) 解锁 Web Speech API
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      // 获取语音列表
-      const voices = window.speechSynthesis.getVoices()
-
-      // 如果没有加载，先触发加载
-      if (voices.length === 0) {
-        window.speechSynthesis.getVoices()
-      }
-
-      // 播放一个无声的测试音频来解锁音频上下文
-      const utterance = new SpeechSynthesisUtterance(' ')
-      utterance.volume = 0
-      window.speechSynthesis.speak(utterance)
-      window.speechSynthesis.cancel()
+      window.speechSynthesis.getVoices()
+      try {
+        const u = new SpeechSynthesisUtterance(' ')
+        u.volume = 0
+        window.speechSynthesis.speak(u)
+      } catch {}
     }
 
-    // 保存初始化状态
+    // 3) 解锁 HTML5 Audio
+    try {
+      const a = new Audio()
+      a.play().catch(() => {})
+    } catch {}
+
     localStorage.setItem('soundInitialized', 'true')
     setInitialized(true)
     setShowHint(false)
     onInit?.()
   }
 
-  // 如果已经初始化或不需要提示，不显示
   if (!showHint || initialized) return null
 
   return (

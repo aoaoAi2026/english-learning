@@ -1,29 +1,35 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Volume2, Lightbulb, ChevronRight, RotateCcw } from 'lucide-react'
+import { Volume2, Lightbulb, ChevronRight, RotateCcw, ArrowLeft } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Timer, useTimer } from '@/components/ui/Timer'
 import { BigStars } from '@/components/ui/StarRating'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { AudioPlayer } from '@/components/ui/AudioPlayer'
+import { CorrectPopup } from '@/components/effects/Celebration'
+import { Celebration } from '@/components/effects/Celebration'
 import { Grade, Question } from '@/types'
 import { getLevelById } from '@/data/levels'
 import { getQuestionsByGrade } from '@/data/questions'
 import { useUserStore } from '@/stores/userStore'
 import { speechService } from '@/services/speech'
+import { playCorrect, playWrong, playCombo, playLevelUp, playConfetti } from '@/utils/sounds'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
 type GameState = 'playing' | 'result'
 
 export function LevelPlayPage() {
-  const { gradeId, levelId } = useParams()
+  const { levelId } = useParams()
   const navigate = useNavigate()
-  const grade = parseInt(gradeId || '1') as Grade
   const level = getLevelById(levelId || '')
+  const grade = level?.grade || Grade.ONE
   const allQuestions = getQuestionsByGrade(grade)
   const { completeLevel, addWrongQuestion, updateStudyStreak } = useUserStore()
+  const [combo, setCombo] = useState(0)
+  const [showCorrect, setShowCorrect] = useState(false)
+  const [showCelebration, setShowCelebration] = useState(false)
   
   const [gameState, setGameState] = useState<GameState>('playing')
   const [questions, setQuestions] = useState<Question[]>([])
@@ -55,6 +61,18 @@ export function LevelPlayPage() {
     const isCorrect = answer === currentQuestion.answer
     if (!isCorrect) {
       addWrongQuestion(currentQuestion.id)
+      playWrong()
+      setCombo(0)
+    } else {
+      const newCombo = combo + 1
+      setCombo(newCombo)
+      if (newCombo >= 3) {
+        playCombo(newCombo)
+        setShowCorrect(true)
+        setTimeout(() => setShowCorrect(false), 1500)
+      } else {
+        playCorrect()
+      }
     }
     
     // 自动进入下一题
@@ -91,6 +109,14 @@ export function LevelPlayPage() {
       completeLevel(level.id, stars)
       updateStudyStreak()
     }
+
+    if (stars >= 2) {
+      setTimeout(() => {
+        playLevelUp()
+        playConfetti()
+        setShowCelebration(true)
+      }, 300)
+    }
     
     setGameState('result')
   }
@@ -109,10 +135,31 @@ export function LevelPlayPage() {
     timer.start()
   }
   
-  if (!level || questions.length === 0) {
+  if (!level) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <p className="text-gray-500">加载中...</p>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-cyan-50 flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="text-6xl mb-4">🗺️</div>
+          <p className="text-xl text-gray-600 mb-4">关卡不存在</p>
+          <Link to="/adventure" className="px-6 py-3 bg-gradient-to-r from-orange-500 to-cyan-500 text-white rounded-2xl font-bold shadow-lg hover:scale-105 transition-transform inline-block">
+            ← 返回冒险地图
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-cyan-50 flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="text-6xl mb-4">📝</div>
+          <p className="text-xl text-gray-600 mb-2">暂无题目数据</p>
+          <p className="text-sm text-gray-400 mb-4">{grade}年级题库为空，请先添加单词</p>
+          <button onClick={handleRestart} className="px-6 py-3 bg-gradient-to-r from-orange-500 to-cyan-500 text-white rounded-2xl font-bold shadow-lg hover:scale-105 transition-transform">
+            🔄 重试
+          </button>
+        </div>
       </div>
     )
   }
@@ -124,6 +171,7 @@ export function LevelPlayPage() {
     
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
+        <Celebration show={showCelebration} type={stars >= 3 ? 'all' : 'stars'} />
         <Card className="text-center p-8">
           <h2 className="text-3xl font-bold text-gray-800 mb-6">
             {stars > 0 ? '🎉 恭喜过关！' : '😢 继续努力！'}
@@ -151,7 +199,7 @@ export function LevelPlayPage() {
               <RotateCcw size={20} className="mr-2" />
               重新挑战
             </Button>
-            <Link to={`/grade/${grade}/adventure`}>
+            <Link to="/adventure">
               <Button>
                 返回地图
                 <ChevronRight size={20} className="ml-2" />
@@ -184,6 +232,7 @@ export function LevelPlayPage() {
   // 答题页面
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <CorrectPopup show={showCorrect} combo={combo} />
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

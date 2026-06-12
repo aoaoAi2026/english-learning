@@ -363,9 +363,9 @@ export function getLevelsByGrade(grade: Grade): Level[] {
   }
 }
 
-// 根据ID获取关卡
-export function getLevelById(id: string): Level | undefined {
-  const allLevels = [
+// 获取所有关卡
+export function getAllLevels(): Level[] {
+  return [
     ...grade1Levels,
     ...grade2Levels,
     ...grade3Levels,
@@ -373,5 +373,9 @@ export function getLevelById(id: string): Level | undefined {
     ...grade5Levels,
     ...grade6Levels
   ]
-  return allLevels.find(l => l.id === id)
+}
+
+// 根据ID获取关卡
+export function getLevelById(id: string): Level | undefined {
+  return getAllLevels().find(l => l.id === id)
 }

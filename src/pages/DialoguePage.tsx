@@ -1,16 +1,17 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react'
 import { AudioPlayer } from '@/components/ui/AudioPlayer'
+import { GradeSelector } from '@/components/ui/GradeSelector'
 import { Grade, GradeNames } from '@/types'
 import { getDialoguesByGrade } from '@/data/sentences'
 import { useUserStore } from '@/stores/userStore'
+import { playCorrect, playWrong, playClick } from '@/utils/sounds'
 
 export function DialoguePage() {
-  const { gradeId } = useParams()
-  const grade = parseInt(gradeId || '1') as Grade
+  const { addWrongQuestion, progress, setCurrentGrade } = useUserStore()
+  const [grade, setGrade] = useState<Grade>(progress.currentGrade || Grade.ONE)
   const dialogues = getDialoguesByGrade(grade)
-  const { addWrongQuestion } = useUserStore()
 
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0)
   const [currentBlankIndex, setCurrentBlankIndex] = useState(0)
@@ -32,6 +33,9 @@ export function DialoguePage() {
 
     if (!correct) {
       addWrongQuestion(currentDialogue.id)
+      playWrong()
+    } else {
+      playCorrect()
     }
   }
 
@@ -87,10 +91,10 @@ export function DialoguePage() {
             {GradeNames[grade]}暂无情景对话数据
           </p>
           <Link
-            to={`/grade/${grade}`}
+            to="/"
             className="inline-block px-6 py-3 bg-cyan-500 text-white rounded-xl hover:bg-cyan-600 transition-colors"
           >
-            ← 返回年级主页
+            ← 返回首页
           </Link>
         </div>
       </div>
@@ -240,17 +244,17 @@ export function DialoguePage() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-cyan-50">
       <div className="max-w-3xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Link
-            to={`/grade/${grade}`}
-            className="text-cyan-600 hover:text-cyan-700 font-medium"
-          >
-            ← 返回
-          </Link>
+        <div className="flex items-center justify-between mb-4">
+          <Link to="/" onClick={playClick} className="text-cyan-600 hover:text-cyan-700 font-medium">← 首页</Link>
           <div className="text-gray-600 font-medium">
             对话 {currentDialogueIndex + 1} / {dialogues.length} · 填空{' '}
             {currentBlankIndex + 1} / {currentDialogue.blanks.length}
           </div>
+        </div>
+
+        {/* Grade Selector */}
+        <div className="mb-4">
+          <GradeSelector value={grade} onChange={(g) => { setGrade(g); setCurrentGrade(g); setCurrentDialogueIndex(0); setCurrentBlankIndex(0) }} compact />
         </div>
 
         {/* Progress */}

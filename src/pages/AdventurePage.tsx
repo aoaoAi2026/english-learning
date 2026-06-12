@@ -1,178 +1,163 @@
-import { Link, useParams } from 'react-router-dom'
-import { Lock, CheckCircle, Star } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Lock, CheckCircle, Star, ArrowLeft, Trophy, Sparkles } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import { Grade } from '@/types'
-import { getLevelsByGrade } from '@/data/levels'
+import { GradeSelector } from '@/components/ui/GradeSelector'
+import { FloatingEmojis } from '@/components/effects/FloatingEmojis'
+import { Grade, GradeNames } from '@/types'
+import { getLevelsByGrade, getAllLevels } from '@/data/levels'
 import { useUserStore } from '@/stores/userStore'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { playClick } from '@/utils/sounds'
 
 export function AdventurePage() {
-  const { gradeId } = useParams()
-  const grade = parseInt(gradeId || '1') as Grade
-  const levels = getLevelsByGrade(grade)
-  const { progress } = useUserStore()
-  
+  const { progress, setCurrentGrade } = useUserStore()
+  const [grade, setGrade] = useState<Grade>(progress.currentGrade || Grade.ONE)
+  const [showAll, setShowAll] = useState(false)
+
+  const levels = showAll ? getAllLevels() : getLevelsByGrade(grade)
+
   const isLevelUnlocked = (levelId: string, prerequisite?: string) => {
     if (!prerequisite) return true
     return progress.completedLevels.includes(prerequisite)
   }
-  
+
   const getLevelStars = (levelId: string) => {
     return progress.stars[levelId] || 0
   }
 
+  const totalLevels = getAllLevels()
+  const totalCompleted = totalLevels.filter(l => progress.completedLevels.includes(l.id)).length
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          🎮 闯关大冒险
-        </h1>
-        <p className="text-gray-600">
-          完成关卡获得星星，解锁更多挑战！
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-yellow-50 to-cyan-50">
+      <FloatingEmojis count={12} />
+      <div className="max-w-6xl mx-auto px-4 py-6 relative z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <Link to="/" onClick={playClick} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 font-medium">
+            <ArrowLeft size={20} />
+            首页
+          </Link>
+          <button
+            onClick={() => { playClick(); setShowAll(!showAll) }}
+            className={`text-sm font-medium px-3 py-1.5 rounded-xl transition-all ${
+              showAll ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-500'
+            }`}
+          >
+            {showAll ? '全年级视图' : '按年级查看'}
+          </button>
+        </div>
 
-      {/* World Map */}
-      <div className="relative">
-        {/* Path Lines */}
-        <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          style={{ zIndex: 0 }}
-        >
-          {levels.map((level, index) => {
-            if (index === 0) return null
-            const prevLevel = levels[index - 1]
-            const x1 = ((index - 1) % 3) * 33.33 + 16.67
-            const y1 = Math.floor((index - 1) / 3) * 50 + 25
-            const x2 = (index % 3) * 33.33 + 16.67
-            const y2 = Math.floor(index / 3) * 50 + 25
-            
-            const isCompleted = progress.completedLevels.includes(prevLevel.id)
-            
-            return (
-              <line
-                key={`line-${level.id}`}
-                x1={`${x1}%`}
-                y1={`${y1}%`}
-                x2={`${x2}%`}
-                y2={`${y2}%`}
-                stroke={isCompleted ? '#F97316' : '#E5E7EB'}
-                strokeWidth="4"
-                strokeLinecap="round"
-                strokeDasharray={isCompleted ? '0' : '8 8'}
-              />
-            )
-          })}
-        </svg>
+        {/* Title */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
+            🗺️ 闯关大冒险
+            {totalCompleted === totalLevels && <Trophy size={28} className="text-yellow-500 animate-bounce" />}
+          </h1>
+          <div className="inline-flex items-center gap-2 bg-white/80 rounded-full px-4 py-1.5 shadow-sm">
+            <Sparkles size={16} className="text-yellow-500" />
+            <p className="text-gray-600 text-sm font-medium">
+              已闯过 <span className="text-orange-500 font-bold">{totalCompleted}</span> / {totalLevels} 关
+            </p>
+          </div>
+        </div>
 
-        {/* Level Nodes */}
-        <div className="grid grid-cols-3 gap-8 relative" style={{ zIndex: 1 }}>
-          {levels.map((level, index) => {
-            const unlocked = isLevelUnlocked(level.id, level.prerequisite)
-            const completed = progress.completedLevels.includes(level.id)
-            const stars = getLevelStars(level.id)
-            
-            return (
-              <Link
-                key={level.id}
-                to={unlocked ? `/grade/${grade}/adventure/${level.id}` : '#'}
-                className={twMerge(!unlocked && 'pointer-events-none')}
-              >
-                <Card
-                  hover={unlocked}
-                  className={twMerge(
-                    clsx(
-                      'text-center relative overflow-hidden',
-                      !unlocked && 'opacity-60'
-                    )
-                  )}
+        {/* Grade Filter */}
+        {!showAll && (
+          <div className="mb-6">
+            <GradeSelector value={grade} onChange={(g) => { setGrade(g); setCurrentGrade(g) }} compact />
+          </div>
+        )}
+
+        {showAll && (
+          <div className="mb-6">
+            <p className="text-sm text-gray-400 text-center">正在显示所有年级的关卡</p>
+          </div>
+        )}
+
+        {/* Adventure Map */}
+        <div className="relative">
+          <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+            {levels.map((level, index) => {
+              if (index === 0) return null
+              const prevLevel = levels[index - 1]
+              const isSameGrade = level.grade === prevLevel.grade
+              const x1 = ((index - 1) % 3) * 33.33 + 16.67
+              const y1 = Math.floor((index - 1) / 3) * 50 + 25
+              const x2 = (index % 3) * 33.33 + 16.67
+              const y2 = Math.floor(index / 3) * 50 + 25
+              const isCompleted = progress.completedLevels.includes(prevLevel.id)
+
+              if (!isSameGrade && index % 3 === 0) return null
+
+              return (
+                <line
+                  key={`line-${level.id}`}
+                  x1={`${x1}%`} y1={`${y1}%`} x2={`${x2}%`} y2={`${y2}%`}
+                  stroke={isCompleted ? '#F97316' : '#E5E7EB'}
+                  strokeWidth="4" strokeLinecap="round"
+                  strokeDasharray={isCompleted ? '0' : '8 8'}
+                />
+              )
+            })}
+          </svg>
+
+          <div className="grid grid-cols-3 gap-4 md:gap-6 relative" style={{ zIndex: 1 }}>
+            {levels.map((level) => {
+              const unlocked = isLevelUnlocked(level.id, level.prerequisite)
+              const completed = progress.completedLevels.includes(level.id)
+              const stars = getLevelStars(level.id)
+
+              return (
+                <Link
+                  key={level.id}
+                  to={unlocked ? `/adventure/${level.id}` : '#'}
+                  onClick={unlocked ? playClick : undefined}
+                  className={twMerge(!unlocked && 'pointer-events-none')}
                 >
-                  {/* Background Pattern */}
-                  <div className={twMerge(
-                    clsx(
+                  <Card hover={unlocked}
+                    className={twMerge(clsx('text-center relative overflow-hidden p-4', !unlocked && 'opacity-60'))}
+                  >
+                    <div className={twMerge(clsx(
                       'absolute inset-0 opacity-10',
-                      completed
-                        ? 'bg-gradient-to-br from-green-400 to-green-600'
-                        : unlocked
-                          ? 'bg-gradient-to-br from-orange-400 to-cyan-400'
-                          : 'bg-gray-300'
-                    )
-                  )} />
-
-                  {/* Status Icon */}
-                  <div className="absolute top-3 right-3">
-                    {!unlocked && <Lock className="text-gray-400" size={20} />}
-                    {completed && <CheckCircle className="text-green-500" size={20} />}
-                  </div>
-
-                  {/* Level Icon */}
-                  <div className={twMerge(
-                    clsx(
-                      'w-20 h-20 mx-auto rounded-2xl flex items-center justify-center text-4xl mb-4 shadow-lg',
-                      completed
-                        ? 'bg-green-100'
-                        : unlocked
-                          ? 'bg-gradient-to-br from-orange-100 to-cyan-100'
-                          : 'bg-gray-100'
-                    )
-                  )}>
-                    {level.icon}
-                  </div>
-
-                  {/* Level Info */}
-                  <h3 className="text-lg font-bold text-gray-800 mb-1">
-                    第{level.order}关
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    {level.name}
-                  </p>
-                  <p className="text-xs text-gray-500 mb-3">
-                    {level.description}
-                  </p>
-
-                  {/* Stars */}
-                  <div className="flex justify-center gap-1">
-                    {[1, 2, 3].map((star) => (
-                      <Star
-                        key={star}
-                        size={20}
-                        className={twMerge(
-                          clsx(
-                            star <= stars
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'fill-gray-200 text-gray-200'
-                          )
-                        )}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Question Count */}
-                  <p className="text-xs text-gray-400 mt-3">
-                    {level.questionCount}题 · {Math.floor(level.timeLimit / 60)}分钟
-                  </p>
-                </Card>
-              </Link>
-            )
-          })}
+                      completed ? 'bg-gradient-to-br from-green-400 to-green-600' :
+                      unlocked ? 'bg-gradient-to-br from-orange-400 to-cyan-400' : 'bg-gray-300'
+                    ))} />
+                    <div className="absolute top-2 right-2">
+                      {!unlocked && <Lock className="text-gray-400" size={18} />}
+                      {completed && <CheckCircle className="text-green-500" size={18} />}
+                    </div>
+                    <div className={twMerge(clsx(
+                      'w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-3xl mb-2 shadow-md',
+                      completed ? 'bg-green-100' : unlocked ? 'bg-gradient-to-br from-orange-100 to-cyan-100' : 'bg-gray-100'
+                    ))}>
+                      {level.icon}
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-800">{level.name}</h3>
+                    {showAll && (
+                      <span className="text-[10px] text-gray-400">{GradeNames[level.grade]}</span>
+                    )}
+                    <div className="flex justify-center gap-0.5 mt-1">
+                      {[1, 2, 3].map((s) => (
+                        <Star key={s} size={14}
+                          className={clsx(s <= stars ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200')}
+                        />
+                      ))}
+                    </div>
+                  </Card>
+                </Link>
+              )
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* Legend */}
-      <div className="mt-12 flex justify-center gap-8">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gray-300 rounded" />
-          <span className="text-sm text-gray-500">未解锁</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gradient-to-r from-orange-400 to-cyan-400 rounded" />
-          <span className="text-sm text-gray-500">可挑战</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-500 rounded" />
-          <span className="text-sm text-gray-500">已完成</span>
+        {/* Legend */}
+        <div className="mt-8 flex justify-center gap-6">
+          <div className="flex items-center gap-2"><div className="w-3 h-3 bg-gray-300 rounded" /><span className="text-xs text-gray-400">未解锁</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 bg-gradient-to-r from-orange-400 to-cyan-400 rounded" /><span className="text-xs text-gray-400">可挑战</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 rounded" /><span className="text-xs text-gray-400">已完成</span></div>
         </div>
       </div>
     </div>

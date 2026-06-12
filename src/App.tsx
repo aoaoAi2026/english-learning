@@ -3,7 +3,6 @@ import { Layout } from '@/components/layout/Layout'
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary'
 import { SoundInit } from '@/components/ui/SoundInit'
 import { HomePage } from '@/pages/HomePage'
-import { GradeHomePage } from '@/pages/GradeHomePage'
 import { WordsPage } from '@/pages/WordsPage'
 import { PhonicsPage } from '@/pages/PhonicsPage'
 import { SentencePage } from '@/pages/SentencePage'
@@ -14,6 +13,14 @@ import { ExamPage } from '@/pages/ExamPage'
 import { ReportPage } from '@/pages/ReportPage'
 import { WrongBookPage } from '@/pages/WrongBookPage'
 import { ResourcesPage } from '@/pages/ResourcesPage'
+import { DailyCheckInPage } from '@/pages/DailyCheckInPage'
+import { GamesHubPage } from '@/pages/games/GamesHubPage'
+import { MemoryMatchPage } from '@/pages/games/MemoryMatchPage'
+import { SpellingBeePage } from '@/pages/games/SpellingBeePage'
+import { WordSearchPage } from '@/pages/games/WordSearchPage'
+import { WordScramblePage } from '@/pages/games/WordScramblePage'
+import { SpinWheelPage } from '@/pages/games/SpinWheelPage'
+import { GradeHomePage } from '@/pages/GradeHomePage'
 
 export default function App() {
   return (
@@ -22,43 +29,40 @@ export default function App() {
         <Layout>
           <SoundInit />
           <Routes>
-          {/* 首页 */}
           <Route path="/" element={<HomePage />} />
-          
-          {/* 年级主页 */}
+          <Route path="/daily-checkin" element={<DailyCheckInPage />} />
+          <Route path="/words" element={<WordsPage />} />
+          <Route path="/phonics" element={<PhonicsPage />} />
+          <Route path="/sentences" element={<SentencePage />} />
+          <Route path="/dialogue" element={<DialoguePage />} />
+          <Route path="/adventure" element={<AdventurePage />} />
+          <Route path="/adventure/:levelId" element={<LevelPlayPage />} />
+          <Route path="/exam" element={<ExamPage />} />
+          <Route path="/report" element={<ReportPage />} />
+          <Route path="/wrongbook" element={<WrongBookPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
+          <Route path="/games" element={<GamesHubPage />} />
+          <Route path="/games/memory" element={<MemoryMatchPage />} />
+          <Route path="/games/spelling" element={<SpellingBeePage />} />
+          <Route path="/games/wordsearch" element={<WordSearchPage />} />
+          <Route path="/games/scramble" element={<WordScramblePage />} />
+          <Route path="/games/spinwheel" element={<SpinWheelPage />} />
+
+          {/* 年级子路由 */}
           <Route path="/grade/:gradeId" element={<GradeHomePage />} />
-          
-          {/* 单词学习 */}
           <Route path="/grade/:gradeId/words" element={<WordsPage />} />
-          <Route path="/grade/:gradeId/words/:unitId" element={<WordsPage />} />
-          
-          {/* 音标学习 */}
           <Route path="/grade/:gradeId/phonics" element={<PhonicsPage />} />
-          
-          {/* 句子学习 */}
           <Route path="/grade/:gradeId/sentences" element={<SentencePage />} />
-          
-          {/* 情景对话 */}
           <Route path="/grade/:gradeId/dialogue" element={<DialoguePage />} />
-          
-          {/* 闯关游戏 */}
           <Route path="/grade/:gradeId/adventure" element={<AdventurePage />} />
           <Route path="/grade/:gradeId/adventure/:levelId" element={<LevelPlayPage />} />
-          
-          {/* 模拟考试 */}
           <Route path="/grade/:gradeId/exam" element={<ExamPage />} />
-          
-          {/* 题库中心 */}
-          <Route path="/grade/:gradeId/practice" element={<ExamPage />} />
-          
-          {/* 学习报告 */}
-          <Route path="/report" element={<ReportPage />} />
-          
-          {/* 错题本 */}
-          <Route path="/wrongbook" element={<WrongBookPage />} />
-          
-          {/* 资源导航 */}
-          <Route path="/resources" element={<ResourcesPage />} />
+          <Route path="/grade/:gradeId/games" element={<GamesHubPage />} />
+          <Route path="/grade/:gradeId/games/memory" element={<MemoryMatchPage />} />
+          <Route path="/grade/:gradeId/games/spelling" element={<SpellingBeePage />} />
+          <Route path="/grade/:gradeId/games/wordsearch" element={<WordSearchPage />} />
+          <Route path="/grade/:gradeId/games/scramble" element={<WordScramblePage />} />
+          <Route path="/grade/:gradeId/games/spinwheel" element={<SpinWheelPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

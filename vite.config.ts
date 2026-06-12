@@ -9,9 +9,10 @@ export default defineConfig({
     sourcemap: 'hidden',
   },
   server: {
-    port: 5174,
+    port: 5173,
     strictPort: true,
     host: '0.0.0.0',
+    allowedHosts: ['pe1n6075p.shenzhuo.vip', '.shenzhuo.vip'],
   },
   plugins: [
     react({

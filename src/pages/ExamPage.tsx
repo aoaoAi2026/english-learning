@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { Play, CheckCircle, XCircle, Clock, BarChart } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Play, CheckCircle, XCircle, Clock, BarChart, ArrowLeft } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Timer, useTimer } from '@/components/ui/Timer'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { AudioPlayer } from '@/components/ui/AudioPlayer'
-import { Grade, Question, QuestionType, ExamResult } from '@/types'
+import { GradeSelector } from '@/components/ui/GradeSelector'
+import { Grade, Question, ExamResult } from '@/types'
 import { getQuestionsByGrade } from '@/data/questions'
 import { useUserStore } from '@/stores/userStore'
 import { clsx } from 'clsx'
@@ -15,10 +16,9 @@ import { twMerge } from 'tailwind-merge'
 type ExamState = 'setup' | 'playing' | 'result'
 
 export function ExamPage() {
-  const { gradeId } = useParams()
-  const grade = parseInt(gradeId || '1') as Grade
+  const { addExamResult, addWrongQuestion, progress, setCurrentGrade } = useUserStore()
+  const [grade, setGrade] = useState<Grade>(progress.currentGrade || Grade.ONE)
   const allQuestions = getQuestionsByGrade(grade)
-  const { addExamResult, addWrongQuestion } = useUserStore()
   
   const [examState, setExamState] = useState<ExamState>('setup')
   const [questionCount, setQuestionCount] = useState(10)
@@ -100,6 +100,12 @@ export function ExamPage() {
           <p className="text-gray-600 mb-8">自动生成试卷，测试你的英语水平</p>
           
           <div className="space-y-6 text-left">
+            {/* 年级选择 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">选择难度</label>
+              <GradeSelector value={grade} onChange={(g) => { setGrade(g); setCurrentGrade(g) }} compact />
+            </div>
+
             {/* 题目数量 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
