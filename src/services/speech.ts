@@ -11,8 +11,7 @@ class SpeechService {
 
   // 播放单词发音
   speakWord(word: string, rate?: number): Promise<void> {
-    const lang = this.voiceType === 'UK' ? 'en-GB' as const : 'en-US' as const
-    return ttsService.speak(word, { rate: rate ?? this.rate, lang }).then(() => {})
+    return ttsService.speak(word, { rate: rate ?? this.rate }).then(() => {})
   }
 
   // 播放句子

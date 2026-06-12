@@ -156,7 +156,7 @@ export function LevelPlayPage() {
           <div className="text-6xl mb-4">📝</div>
           <p className="text-xl text-gray-600 mb-2">暂无题目数据</p>
           <p className="text-sm text-gray-400 mb-4">{grade}年级题库为空，请先添加单词</p>
-          <button onClick={handleRestart} className="px-6 py-3 bg-gradient-to-r from-orange-500 to-cyan-500 text-white rounded-2xl font-bold shadow-lg hover:scale-105 transition-transform">
+          <button onClick={handleRetry} className="px-6 py-3 bg-gradient-to-r from-orange-500 to-cyan-500 text-white rounded-2xl font-bold shadow-lg hover:scale-105 transition-transform">
             🔄 重试
           </button>
         </div>

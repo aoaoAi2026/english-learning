@@ -77,8 +77,8 @@ const wordEmoji: Record<string, string> = {
   firefighter: '👨‍🚒', soldier: '🪖', pilot: '👨‍✈️', chef: '👨‍🍳',
   farmer: '👨‍🌾', driver: '🚗', painter: '🎨', singer: '🎤',
   dancer: '💃', writer: '✍️', actor: '🎭', scientist: '🔬',
-  artist: '🎨', musician: '🎵', athlete: '🏃', coach: '📋',
-  engineer: '⚙️',
+  artist: '🎨', musician: '🎵', runner: '🏃', swimmer: '🏊', player: '⛹️',
+  coach: '📋', engineer: '⚙️', athlete: '🏆',
 
   // 家庭
   family: '👨‍👩‍👧‍👦', mother: '👩', father: '👨', brother: '👦',
@@ -86,23 +86,21 @@ const wordEmoji: Record<string, string> = {
 
   // 情绪
   happy: '😊', sad: '😢', angry: '😠', scared: '😨',
-  love: '❤️', smile: '😀', cry: '😭',
+  smile: '😀', cry: '😭',
 
   // 天气/季节
   sunny: '☀️', rainy: '🌧️', cloudy: '☁️', snowy: '🌨️',
   windy: '💨', foggy: '🌫️', stormy: '⛈️', weather: '🌤️',
 
   // 动作
-  run: '🏃', walk: '🚶', jump: '🤸', swim: '🏊', fly: '🕊️',
-  eat: '🍽️', drink: '🥤', sleep: '😴', read: '📖', write: '✍️',
+  run: '🏃', walk: '🚶', jump: '🤸', swim: '🏊', eat: '🍽️', drink: '🥤', sleep: '😴', read: '📖', write: '✍️',
   sing: '🎤', dance: '💃', play: '🎮', work: '💼', study: '📝',
   cook: '🍳', draw: '🎨', paint: '🖌️', climb: '🧗', drive: '🚗',
   ride: '🚴', sit: '🪑', stand: '🧍', wash: '🚿', clean: '🧹',
   open: '📂', close: '📁', push: '👐', pull: '🤏', cut: '✂️',
   buy: '🛒', sell: '💰', give: '🎁', take: '🤲', make: '🔨',
   see: '👀', hear: '👂', speak: '🗣️', think: '🤔', know: '🧠',
-  learn: '📚', teach: '👩‍🏫', help: '🆘', love: '❤️', like: '👍',
-  hate: '👎', need: '🆘', want: '🙏', try: '💪', start: '▶️',
+  learn: '📚', teach: '👩‍🏫', help: '🆘', love: '❤️', like: '👍', hate: '👎',
   stop: '⏹️', go: '🟢', come: '🚶', find: '🔍', lose: '🔎',
   remember: '🧠', forget: '🤔',
 
@@ -115,9 +113,8 @@ const wordEmoji: Record<string, string> = {
   knife: '🔪', table: '🪑', chair: '🪑', bed: '🛏️', desk: '🪑',
 
   // 其他常用
-  house: '🏠', room: '🚪', class: '🏫', game: '🎮', music: '🎵',
-  sport: '⚽', movie: '🎬', photo: '📸', music: '🎵', letter: '✉️',
-  number: '🔢', color: '🎨', shape: '🔷', size: '📐',
+  house: '🏠', room: '🚪', class: '🏫', game: '🎮', sport: '⚽',
+  movie: '🎬', photo: '📸', letter: '✉️', number: '🔢', color: '🎨', shape: '🔷', size: '📐',
   morning: '🌅', afternoon: '☀️', evening: '🌇', night: '🌃',
   day: '📅', week: '📆', month: '🗓️', year: '📅', time: '⏰',
   today: '📅', tomorrow: '➡️', yesterday: '⬅️', birthday: '🎂',
@@ -128,12 +125,6 @@ const wordEmoji: Record<string, string> = {
   big: '🐘', small: '🐭', hot: '🔥', cold: '❄️',
   fast: '🚀', slow: '🐢', old: '👴', new: '✨',
   long: '📏', short: '📐', tall: '🦒', high: '⬆️', low: '⬇️',
-  // 新增词汇
-  uncle: '👨', aunt: '👩', cousin: '👫',
-  husband: '👨', wife: '👩', partner: '🤝',
-  boss: '👔', worker: '👷', waiter: '🧑‍🍳',
-  athlete: '🏃', runner: '🏃', swimmer: '🏊', player: '⛹️',
-  leader: '👑', captain: '🦸', member: '👥', group: '👥',
   prepare: '📋', explain: '💬', describe: '📝', compare: '⚖️',
   analyze: '🔍', evaluate: '⭐', organize: '📂', arrange: '🔢',
   collect: '🗃️', connect: '🔗', create: '🎨', design: '✏️',
@@ -150,7 +141,7 @@ const wordEmoji: Record<string, string> = {
   future: '🔮', lesson: '📖', success: '🏆',
   // 环境/自然
   environment: '🌍', pollution: '🏭', recycle: '♻️', energy: '⚡',
-  fuel: '⛽', electricity: '⚡', gas: '🔥', oil: '🛢️', coal: '🪨',
+  fuel: '⛽', electricity: '🔌', gas: '🔥', oil: '🛢️', coal: '🪨',
   solar: '☀️', power: '🔌', resource: '💎', material: '🧱',
   plastic: '🍶', metal: '🔩', glass: '🥛', wood: '🪵', cloth: '👚',
   leather: '🧥', rubber: '🛞', chemical: '🧪', natural: '🌿',
@@ -160,7 +151,6 @@ const wordEmoji: Record<string, string> = {
   valley: '⛰️', hill: '⛰️', plain: '🌾', field: '🌾',
   farm: '🚜', crop: '🌾', harvest: '🌾', plant: '🌱',
   seed: '🌰', soil: '🪹', fertilizer: '💩', pesticide: '💊',
-  pollution: '🏭', energy: '⚡',
 }
 
 // 智能匹配：如果精确匹配不到，尝试模糊匹配

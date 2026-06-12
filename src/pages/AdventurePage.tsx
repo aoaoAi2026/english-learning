@@ -29,6 +29,7 @@ export function AdventurePage() {
 
   const totalLevels = getAllLevels()
   const totalCompleted = totalLevels.filter(l => progress.completedLevels.includes(l.id)).length
+  const totalLevelsCount = totalLevels.length
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-yellow-50 to-cyan-50">
@@ -54,12 +55,12 @@ export function AdventurePage() {
         <div className="text-center mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
             🗺️ 闯关大冒险
-            {totalCompleted === totalLevels && <Trophy size={28} className="text-yellow-500 animate-bounce" />}
+            {totalCompleted === totalLevelsCount && <Trophy size={28} className="text-yellow-500 animate-bounce" />}
           </h1>
           <div className="inline-flex items-center gap-2 bg-white/80 rounded-full px-4 py-1.5 shadow-sm">
             <Sparkles size={16} className="text-yellow-500" />
             <p className="text-gray-600 text-sm font-medium">
-              已闯过 <span className="text-orange-500 font-bold">{totalCompleted}</span> / {totalLevels} 关
+              已闯过 <span className="text-orange-500 font-bold">{totalCompleted}</span> / {totalLevelsCount} 关
             </p>
           </div>
         </div>
